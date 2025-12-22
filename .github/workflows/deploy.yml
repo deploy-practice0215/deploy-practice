@@ -35,7 +35,7 @@ jobs:
 
           destination-github-username: unanbb
 
-          destination-repository-name: deploy-practice2
+          destination-repository-name: deploy
 
           user-email: ${{ secrets.EMAIL }}
 
