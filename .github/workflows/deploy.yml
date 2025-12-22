@@ -3,46 +3,43 @@ name: Deploy
 on:
   push:
     branches: ['develop']
+  pull_request:
+    branches: ['develop']
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     container: pandoc/latex
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Install mustache (to update the date)
-
         run: apk add ruby && gem install mustache
 
       - name: creates output
-
         run: sh ./build.sh
 
+      # 이 단계는 PR일 때나 Push일 때나 항상 실행되어 빌드 성공 여부를 체크합니다.
+      - name: Check build result
+        run: echo "Build successful"
+
+      # 실제 다른 저장소로 푸시하는 이 단계만 'push' 이벤트일 때만 작동하도록 제한합니다.
       - name: Pushes to another repository
-
+        if: github.event_name == 'push' 
         id: push_directory
-
         uses: cpina/github-action-push-to-another-repository@main
-
         env:
           API_TOKEN_GITHUB: ${{ secrets.AUTO_ACTIONS }}
-
         with:
           source-directory: 'output'
-
           destination-github-username: unanbb
-
           destination-repository-name: deploy
-
           user-email: ${{ secrets.EMAIL }}
-
           commit-message: ${{ github.event.commits[0].message }}
-
           target-branch: main
 
       - name: Test get variable exported by push-to-another-repository
-
+        if: github.event_name == 'push'
         run: echo $DESTINATION_CLONED_DIRECTORY
