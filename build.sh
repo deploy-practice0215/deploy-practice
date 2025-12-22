@@ -2,6 +2,6 @@ cd ../
 
 mkdir output
 
-cp -R ./deploy-practice/* ./output
+cp -R ./deploy-practice2/* ./output
 
-cp -R ./output ./deploy-practice/
+cp -R ./output ./deploy-practice2/
