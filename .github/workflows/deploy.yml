@@ -1,0 +1,47 @@
+name: Deploy
+
+on:
+  push:
+    branches: ['develop']  # 본인의 메인 브랜치명에 맞게 수정하세요
+  pull_request:
+    branches: ['develop']  # PR일 때도 작동해야 댓글이 달립니다
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: pandoc/latex # LaTeX 빌드 환경 유지
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install mustache
+        run: apk add ruby && gem install mustache
+
+      - name: Create output
+        run: sh ./build.sh
+
+      # [단계 1] 개인 배포 레포로 파일 전송 (우회 배포 - 무료 유지)
+      - name: Pushes to another repository
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.AUTO_ACTIONS }}
+        with:
+          source-directory: 'output'
+          destination-github-username: unanbb
+          destination-repository-name: deploy
+          user-email: ${{ secrets.EMAIL }}
+          commit-message: ${{ github.event.commits[0].message }}
+          target-branch: main
+
+      # [단계 2] Vercel 봇에게 댓글 명령 (이미지 속 그 댓글!)
+      - name: Vercel Comment
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-comment: true # PR에 댓글 생성 활성화
+          vercel-args: '--prebuilt' # Actions가 이미 빌드했으므로 Vercel은 빌드 생략
+          working-directory: .
+          
